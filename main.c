@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
 
 struct GameMap {
     int width;
@@ -17,6 +19,7 @@ void PrintGameMap(int width, int height) {
 //0 # o   # rambler in (1,1)
 //1 #     #
 //  # # # # this is a 2x2 game map
+    system("cls");
     for(int i = 1; i <= height + 2; i++) {
         //first row and last row
         if (i == 1 || i == height+2) {
@@ -54,6 +57,29 @@ void refresh() {
 int main(void) {
     struct GameMap map = {10,10};
     PrintGameMap(30,10);
-
+    int ch;
+    while(1){
+        if(_kbhit()){
+            ch = _getch();
+            switch (ch)
+            {
+            case 119:
+                printf("W hitted!");
+                break;
+            case 97:
+                printf("A hitted!");
+                break;
+            case 115:
+                printf("S hitted!");
+                break;
+            case 100:
+                printf("D hitted!");
+                break;
+            
+            default:
+                break;
+            }
+        }
+    }
     return 0;
 }
