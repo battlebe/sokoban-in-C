@@ -9,9 +9,18 @@ enum RamblerMove {
     MOVE_RIGHT,
 };
 
+typedef struct {
+    int x,y
+} position;
+
 struct GameMap {
+    // field size
     int width;
     int height;
+
+    // box position
+    position boxes[5];
+
     
 };
 
@@ -26,9 +35,9 @@ void rambler_move(struct Rambler* r, enum RamblerMove movetype) {
     int height = r->map.height;
     switch (movetype)
     {
-    //default (0,0)
+    //default (1,1)
     case MOVE_UP:
-        if(r->y == 0)
+        if(r->y == 1)
             return;
         r->y -= 1;
         break;
@@ -40,7 +49,7 @@ void rambler_move(struct Rambler* r, enum RamblerMove movetype) {
         break;
     
     case MOVE_LEFT:
-        if(r->x == 0)
+        if(r->x == 1)
             return;
         r->x = r->x - 1;
         break;
@@ -53,11 +62,19 @@ void rambler_move(struct Rambler* r, enum RamblerMove movetype) {
     }
 };
 
+void SetBox(int x, int y, struct GameMap _map) {
+    int width = _map.width;
+    int height = _map.height;
+    if( x < 1 || x > width || y < 1 || y > height) {
+        return;
+    }
+}
+
 
 void PrintGameMap(struct GameMap map, struct Rambler player) {
 //    0 1  
 //  # # # #
-//0 # o   # rambler in (1,1)
+//0 # o   # rambler in (0, 0)
 //1 #     #
 //  # # # # this is a 2x2 game map
     int width = map.width;
@@ -67,10 +84,9 @@ void PrintGameMap(struct GameMap map, struct Rambler player) {
 
 
     system("cls");
-    for(int i = 1; i <= height + 2; i++) {
-        //first row and last row
-        if (i == 1 || i == height+2) {
-            //print upper and lower wall
+
+    for(int i = 0; i <= height + 1; i++) {
+        if (i == 0 || i == height+1) {      // lower and upper wall
             for(int j = 0; j < width+2; j++) {
                 if(j == width +1){
                     printf("#\n");
@@ -83,13 +99,16 @@ void PrintGameMap(struct GameMap map, struct Rambler player) {
         else {
             for(int j = 0; j < width +2 ; j++){
                 if(j == 0) {
-                    printf("# ");
+                    printf("# ");       // Left wall
                 }
                 else if(j == width + 1) {
-                    printf("#\n");
+                    printf("#\n");      // Right wall
+                }
+                else if(i == player.y && j == player.x) {
+                    printf("O ");       // represents Playe
                 }
                 else {
-                    printf("  ");
+                    printf("  ");       // Game Field
                 }
             }
         }
@@ -102,8 +121,8 @@ void refresh() {
 
 
 int main(void) {
-    struct GameMap map = {30,10};
-    struct Rambler ramb = {0,0, map};
+    struct GameMap map = {5,5};
+    struct Rambler ramb = {1,1, map};
 
     PrintGameMap(map,ramb); //with rambler in it
     int userPressedKey;
@@ -132,6 +151,7 @@ int main(void) {
             default:
                 break;
             }
+            PrintGameMap(map, ramb);
             printf("rambler Moved!, From (%d,%d) to (%d,%d)\n",currentXPosition,currentYPosition,ramb.x,ramb.y);
         }
     }
