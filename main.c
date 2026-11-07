@@ -10,27 +10,126 @@ enum RamblerMove {
 };
 
 typedef struct {
-    int x,y
-} position;
+    int x,y;
+} Position;
 
-struct GameMap {
+typedef struct {
     // field size
     int width;
     int height;
 
-    // box position
-    position boxes[5];
+    // box Position
+    // todo: Multi box 
+    Position boxPosition;
+} GameMap ;
 
-    
-};
-
-struct Rambler {
+typedef struct {
     int x;
     int y;
-    struct GameMap map;
-};
+    GameMap map;
+} Rambler ;
 
-void rambler_move(struct Rambler* r, enum RamblerMove movetype) {
+void Rambler_move(Rambler* r, enum RamblerMove movetype);
+
+void SetBox(Position pos, GameMap *_map);
+
+void PrintGameMap(GameMap map, Rambler player);
+
+void refresh() { }
+
+
+
+int main(void) {
+    // init gamemap: rambler box
+    GameMap map = {5,5};
+    Rambler ramb = {1,1, map};
+    Position pos = {3,3};
+    SetBox(pos,&map);
+
+    PrintGameMap(map,ramb); //with rambler in it
+    int userPressedKey;
+
+    // main game loop
+    while(1){
+        if(_kbhit()){
+            userPressedKey = _getch();
+            int currentXPosition = ramb.x;
+            int currentYPosition = ramb.y;
+            switch (userPressedKey)
+            {
+            case 119:
+                Rambler_move(&ramb,MOVE_UP);
+                break;
+            case 97:
+                Rambler_move(&ramb,MOVE_LEFT);
+                break;
+            case 115:
+                Rambler_move(&ramb,MOVE_DOWN);
+                break;
+            case 100:
+                Rambler_move(&ramb,MOVE_RIGHT);
+                break;
+
+            
+            default:
+                break;
+            }
+            PrintGameMap(map, ramb);
+            printf("rambler Moved!, From (%d,%d) to (%d,%d)\n",currentXPosition,currentYPosition,ramb.x,ramb.y);
+        }
+    }
+    return 0;
+}
+
+
+void PrintGameMap(GameMap map, Rambler player) {
+//    0 1  
+//  # # # #
+//0 # o   # rambler in (0, 0)
+//1 #     #
+//  # # # # this is a 2x2 game map
+    int width = map.width;
+    int height = map.height;
+    int playerPositionX = player.x;
+    int playerPositionY = player.y;
+
+
+    system("cls");
+
+    for(int i = 0; i <= height + 1; i++) {
+        if (i == 0 || i == height+1) {      // lower and upper wall
+            for(int j = 0; j < width+2; j++) {
+                if(j == width +1){
+                    printf("#\n");
+                }
+                else {
+                    printf("# ");
+                }
+            }
+        }
+        else { 
+            for(int j = 0; j < width +2 ; j++){
+                if(j == 0) {
+                    printf("# ");       // Left wall
+                }
+                else if(j == width + 1) {
+                    printf("#\n");      // Right wall
+                }
+                else if(i == player.y && j == player.x) {
+                    printf("O ");       // represents Playe
+                }
+                else if (i == map.boxPosition.y && j == map.boxPosition.x) {
+                    printf("X ");        // represents Box
+                }
+                else {
+                    printf("  ");       // Game Field
+                }
+            }
+        }
+    }
+}
+
+void Rambler_move(Rambler* r, enum RamblerMove movetype) {
     int width = r->map.width;
     int height = r->map.height;
     switch (movetype)
@@ -62,98 +161,13 @@ void rambler_move(struct Rambler* r, enum RamblerMove movetype) {
     }
 };
 
-void SetBox(int x, int y, struct GameMap _map) {
-    int width = _map.width;
-    int height = _map.height;
+void SetBox(Position pos, GameMap *_map) {
+    int x = pos.x;
+    int y = pos.y;
+    int width = _map->width;
+    int height = _map->height;
     if( x < 1 || x > width || y < 1 || y > height) {
         return;
     }
-}
-
-
-void PrintGameMap(struct GameMap map, struct Rambler player) {
-//    0 1  
-//  # # # #
-//0 # o   # rambler in (0, 0)
-//1 #     #
-//  # # # # this is a 2x2 game map
-    int width = map.width;
-    int height = map.height;
-    int playerPositionX = player.x;
-    int playerPositionY = player.y;
-
-
-    system("cls");
-
-    for(int i = 0; i <= height + 1; i++) {
-        if (i == 0 || i == height+1) {      // lower and upper wall
-            for(int j = 0; j < width+2; j++) {
-                if(j == width +1){
-                    printf("#\n");
-                }
-                else {
-                    printf("# ");
-                }
-            }
-        }
-        else {
-            for(int j = 0; j < width +2 ; j++){
-                if(j == 0) {
-                    printf("# ");       // Left wall
-                }
-                else if(j == width + 1) {
-                    printf("#\n");      // Right wall
-                }
-                else if(i == player.y && j == player.x) {
-                    printf("O ");       // represents Playe
-                }
-                else {
-                    printf("  ");       // Game Field
-                }
-            }
-        }
-    }
-}
-
-void refresh() {
-
-}
-
-
-int main(void) {
-    struct GameMap map = {5,5};
-    struct Rambler ramb = {1,1, map};
-
-    PrintGameMap(map,ramb); //with rambler in it
-    int userPressedKey;
-
-    // main game loop
-    while(1){
-        if(_kbhit()){
-            userPressedKey = _getch();
-            int currentXPosition = ramb.x;
-            int currentYPosition = ramb.y;
-            switch (userPressedKey)
-            {
-            case 119:
-                rambler_move(&ramb,MOVE_UP);
-                break;
-            case 97:
-                rambler_move(&ramb,MOVE_LEFT);
-                break;
-            case 115:
-                rambler_move(&ramb,MOVE_DOWN);
-                break;
-            case 100:
-                rambler_move(&ramb,MOVE_RIGHT);
-                break;
-            
-            default:
-                break;
-            }
-            PrintGameMap(map, ramb);
-            printf("rambler Moved!, From (%d,%d) to (%d,%d)\n",currentXPosition,currentYPosition,ramb.x,ramb.y);
-        }
-    }
-    return 0;
+    _map->boxPosition = pos;
 }
