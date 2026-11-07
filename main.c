@@ -37,6 +37,8 @@ void SetBox(Position pos, GameMap *map);
 
 void PrintGameMap(GameMap map, Rambler player);
 
+enum KeyEvent CaptureKeyEvent(int userPressedKey);
+
 void refresh() {}
 
 
@@ -56,30 +58,13 @@ int main(void) {
     // main game loop
     while(1){
         if(_kbhit()){
-            userPressedKey = _getch();
-            int currentXPosition = ramb.x;
-            int currentYPosition = ramb.y;
-            switch (userPressedKey)
-            {
-            case 119:
-                Rambler_move(&ramb,RAMBLER_MOVE_UP);
-                break;
-            case 97:
-                Rambler_move(&ramb,RAMBLER_MOVE_LEFT);
-                break;
-            case 115:
-                Rambler_move(&ramb,RAMBLER_MOVE_DOWN);
-                break;
-            case 100:
-                Rambler_move(&ramb,RAMBLER_MOVE_RIGHT);
-                break;
+            enum KeyEvent evnet = CaptureKeyEvent(_getch());
+            if(evnet == GAME_EXIT)
+                return 0;
 
-            
-            default:
-                break;
-            }
+            Rambler_move(&ramb,evnet);
             PrintGameMap(map, ramb);
-            printf("rambler Moved!, From (%d,%d) to (%d,%d)\n",currentXPosition,currentYPosition,ramb.x,ramb.y);
+            printf("rambler Moved!,  current pos(%d,%d)\n",ramb.x,ramb.y);
         }
     }
     return 0;
@@ -130,6 +115,35 @@ void PrintGameMap(GameMap map, Rambler player) {
                 }
             }
         }
+    }
+}
+
+enum KeyEvent CaptureKeyEvent(int userPressedKey)
+{
+    switch (userPressedKey)
+    {
+    case 119:
+        return RAMBLER_MOVE_UP;
+        break;
+    case 97:
+        return RAMBLER_MOVE_LEFT;
+        break;
+    case 115:
+        return RAMBLER_MOVE_DOWN;
+        break;
+    case 100:
+        return RAMBLER_MOVE_RIGHT;
+        break;
+    case 113:   // q
+        return GAME_EXIT;
+        break;
+    case 114:   // r
+        return GAME_RESTART;
+        break;
+    
+    default:
+        printf("undefined Key input! key's value = %d\n",userPressedKey);
+        break;
     }
 }
 
