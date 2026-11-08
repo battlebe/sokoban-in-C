@@ -13,7 +13,7 @@ enum KeyEvent {
 
 typedef struct {
     int x,y;
-} Position;
+} Box;
 
 typedef struct {
     // field size
@@ -22,48 +22,52 @@ typedef struct {
 
     // box Position
     // todo: Multi box 
-    Position boxPosition;
+    Box boxes[];
 } GameMap ;
 
 typedef struct {
     int x;
     int y;
+
     GameMap map;
+    
 } Rambler ;
 
-void Rambler_move(Rambler* r, enum KeyEvent movetype);
+void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype);
 
-void SetBox(Position pos, GameMap *map);
+void GameMap_Print(GameMap map, Rambler player);
 
-void PrintGameMap(GameMap map, Rambler player);
+int isPosEqual(int lhs[2],int rhs[2]);
 
 enum KeyEvent CaptureKeyEvent(int userPressedKey);
 
-void refresh() {}
-
-
-
-
 
 int main(void) {
-    // init gamemap: rambler box
-    GameMap map = {5,5};
-    Rambler ramb = {1,1, map};
-    Position pos = {3,3};
-    SetBox(pos,&map);
+    //dbg
+    int a[2] = {1,2};
+    int b[2] = {2,1};
+    //dbg
+    // init gamemap: box
+    GameMap map = {5,5,{{3,3},{2,2}}};
 
-    PrintGameMap(map,ramb); //with rambler in it
+    int boxCount = 2;  //todo: get box count
+    Box *boxes = map.boxes;
+
+    Rambler ramb = {1,1, map};
+    GameMap_Print(map,ramb); //with rambler in it
+
     int userPressedKey;
 
     // main game loop
     while(1){
         if(_kbhit()){
             enum KeyEvent evnet = CaptureKeyEvent(_getch());
-            if(evnet == GAME_EXIT)
-                return 0;
 
-            Rambler_move(&ramb,evnet);
-            PrintGameMap(map, ramb);
+            if(evnet == GAME_EXIT)
+                return 0;   //exit game
+
+            Rambler_move(&ramb,&map,evnet);
+            GameMap_Print(map, ramb);
             printf("rambler Moved!,  current pos(%d,%d)\n",ramb.x,ramb.y);
         }
     }
@@ -71,7 +75,7 @@ int main(void) {
 }
 
 
-void PrintGameMap(GameMap map, Rambler player) {
+void GameMap_Print(GameMap map, Rambler player) {
 //    0 1  
 //  # # # #
 //0 # o   # rambler in (0, 0)
@@ -79,8 +83,14 @@ void PrintGameMap(GameMap map, Rambler player) {
 //  # # # # this is a 2x2 game map
     int width = map.width;
     int height = map.height;
-    int playerPositionX = player.x;
-    int playerPositionY = player.y;
+
+    int ramblerPos[2] = {player.x, player.y};
+
+    //Box boxes[] = map.boxes;
+    //Box box1 = *boxes;
+    //Box box2 = *(boxes + 1);
+    //size_t boxesCount = sizeof(boxes);
+    //printf("boxesCount = %d\n",boxesCount);
 
 
     system("cls");
@@ -98,17 +108,15 @@ void PrintGameMap(GameMap map, Rambler player) {
         }
         else { 
             for(int j = 0; j < width +2 ; j++){
+                int scanningPos[2] = {j ,i}; 
                 if(j == 0) {
                     printf("# ");       // Left wall
                 }
                 else if(j == width + 1) {
                     printf("#\n");      // Right wall
                 }
-                else if(i == player.y && j == player.x) {
+                else if(isPosEqual(scanningPos,ramblerPos)) {
                     printf("O ");       // represents Playe
-                }
-                else if (i == map.boxPosition.y && j == map.boxPosition.x) {
-                    printf("X ");        // represents Box
                 }
                 else {
                     printf("  ");       // Game Field
@@ -116,6 +124,14 @@ void PrintGameMap(GameMap map, Rambler player) {
             }
         }
     }
+}
+
+int isPosEqual(int lhs[2], int rhs[2])
+{
+    if(lhs[0] == rhs[0] && lhs[1] == rhs[1])
+        return 1;
+    else
+    return 0;
 }
 
 enum KeyEvent CaptureKeyEvent(int userPressedKey)
@@ -147,9 +163,11 @@ enum KeyEvent CaptureKeyEvent(int userPressedKey)
     }
 }
 
-void Rambler_move(Rambler* r, enum KeyEvent movetype) {
+void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
     int width = r->map.width;
     int height = r->map.height;
+    
+    
     switch (movetype)
     {
     //default (1,1)
@@ -182,13 +200,3 @@ void Rambler_move(Rambler* r, enum KeyEvent movetype) {
     }
 };
 
-void SetBox(Position pos, GameMap *map) {
-    int x = pos.x;
-    int y = pos.y;
-    int width = map->width;
-    int height = map->height;
-    if( x < 1 || x > width || y < 1 || y > height) {
-        return;
-    }
-    map->boxPosition = pos;
-}
