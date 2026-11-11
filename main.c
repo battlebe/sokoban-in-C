@@ -20,9 +20,8 @@ typedef struct {
     int width;
     int height;
 
-    // box Position
-    // todo: Multi box 
-    Box boxes[];
+    Box *boxes;
+    int boxCount;
 } GameMap ;
 
 typedef struct {
@@ -39,19 +38,16 @@ void GameMap_Print(GameMap map, Rambler player);
 
 int isPosEqual(int lhs[2],int rhs[2]);
 
+int isPosEqualBox(int lhs[2],Box *boxes, int boxcount);
+
 enum KeyEvent CaptureKeyEvent(int userPressedKey);
 
 
 int main(void) {
-    //dbg
-    int a[2] = {1,2};
-    int b[2] = {2,1};
-    //dbg
     // init gamemap: box
-    GameMap map = {5,5,{{3,3},{2,2}}};
+    Box boxes[3] = {{2,2},{3,3},{2,3}};
+    GameMap map = {5,5,boxes,3};
 
-    int boxCount = 2;  //todo: get box count
-    Box *boxes = map.boxes;
 
     Rambler ramb = {1,1, map};
     GameMap_Print(map,ramb); //with rambler in it
@@ -85,12 +81,7 @@ void GameMap_Print(GameMap map, Rambler player) {
     int height = map.height;
 
     int ramblerPos[2] = {player.x, player.y};
-
-    //Box boxes[] = map.boxes;
-    //Box box1 = *boxes;
-    //Box box2 = *(boxes + 1);
-    //size_t boxesCount = sizeof(boxes);
-    //printf("boxesCount = %d\n",boxesCount);
+    int boxCount = map.boxCount;
 
 
     system("cls");
@@ -116,7 +107,10 @@ void GameMap_Print(GameMap map, Rambler player) {
                     printf("#\n");      // Right wall
                 }
                 else if(isPosEqual(scanningPos,ramblerPos)) {
-                    printf("O ");       // represents Playe
+                    printf("O ");       // represents Player
+                }
+                else if(isPosEqualBox(scanningPos, map.boxes, boxCount)) {
+                    printf("X ");       // represents Box
                 }
                 else {
                     printf("  ");       // Game Field
@@ -131,6 +125,22 @@ int isPosEqual(int lhs[2], int rhs[2])
     if(lhs[0] == rhs[0] && lhs[1] == rhs[1])
         return 1;
     else
+    return 0;
+}
+
+int isPosEqualBox(int lhs[2],Box *boxes, int boxcount)
+{
+
+    for(int i = 0; i < boxcount ; i++) {
+        int x = lhs[0];
+        int y = lhs[1];
+        int boxX = boxes->x;
+        int boxY = boxes->y;
+        if(lhs[0]== boxes->x && lhs[1] ==boxes->y) {
+            return 1;
+        }
+        ++boxes;
+    }
     return 0;
 }
 
