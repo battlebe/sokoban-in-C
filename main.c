@@ -68,16 +68,17 @@ int isPosEqual(int lhs[2],int rhs[2]);
 
 int isPosEqualBox(int lhs[2],Box *boxes, int boxcount);
 
+int isWall(int x, int y, GameMap map);
+
 enum KeyEvent CaptureKeyEvent(int userPressedKey);
 
 
 int main(void) {
     // init gamemap: box
-    Box boxes[3] = {{2,2},{3,3},{2,3}};
-    Wall walls[2] = {{2,1},{3,1}};
+    Box boxes[] = {{2,2},{3,3},{2,3},{4,3}};
+    Wall walls[3] = {{2,1},{3,1},{4,4}};
 
-    GameMap map = {5,5,boxes,walls,3,2};
-
+    GameMap map = {5,5,boxes,walls,4,3};
 
 
     Rambler ramb = {1,1, map};
@@ -103,6 +104,76 @@ int main(void) {
 
 int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
 {
+    int ramblerX = r.x;
+    int ramblerY = r.y;
+    Wall *walls = m.walls; // {{x,y}, {x,y}}
+    int wallCount = m.wallCount;
+    Box *boxes = m.boxes;
+    int boxCount = m.boxCount;
+
+
+    switch (dir)
+    {
+    case UP:
+        for(int i = 0; i < wallCount; i++) {
+            if( ramblerY - walls->y == 1 && ramblerX == walls->x)
+                return 0;
+            ++walls;
+        }   
+        for(int i = 0; i < boxCount; i++) {
+            if( ramblerY - boxes->y == 1 && ramblerX == boxes->x && isWall(boxes->x,boxes->y-1,m)) {
+                return 0;
+            }
+            ++boxes;
+        }
+        
+        break;
+
+    case DOWN:
+        for(int i = 0; i < wallCount; i++) {
+            if( ramblerY - walls->y == -1 && ramblerX == walls->x)
+                return 0;
+            ++walls;
+        }   
+        for(int i = 0; i < boxCount; i++) {
+            if( ramblerY - boxes->y == -1 && ramblerX == boxes->x && isWall(boxes->x,boxes->y+1,m)) {
+                return 0;
+            }
+            ++boxes;
+        }
+        break;
+
+    case LEFT:
+        for(int i = 0; i < wallCount; i++) {
+            if( ramblerX - walls->x == 1 && ramblerY == walls->y)
+                return 0;
+            ++walls;
+        }   
+        for(int i = 0; i < boxCount; i++) {
+            if( ramblerX - boxes->x == 1 && ramblerY == boxes->y && isWall(boxes->x-1,boxes->y,m)) {
+                return 0;
+            }
+            ++boxes;
+        }
+        break;
+
+    case RIGHT:// (3,4)->(4,4)
+        for(int i = 0; i < wallCount; i++) {
+            if( ramblerX - walls->x == -1 && ramblerY == walls->y)
+                return 0;
+            ++walls;
+        }   
+        for(int i = 0; i < boxCount; i++) {
+            if( ramblerX - boxes->x == -1 && ramblerY == boxes->y && isWall(boxes->x+1,boxes->y,m)) {
+                return 0;
+            }
+            ++boxes;
+        }
+        break;
+    
+    default:
+        break;
+    }
     
     return 1;   // always space
 }
@@ -224,6 +295,33 @@ int isPosEqualBox(int lhs[2],Box *boxes, int boxcount)
     return 0;
 }
 
+int isWall(int x, int y, GameMap map)
+{
+    if (x == 0 || y ==0 || x == map.width+1 || y == map.height+1)
+    {
+        return 1;
+    }
+    Wall *walls = map.walls;
+    int wallCount = map.wallCount;
+    Box *boxes =  map.boxes;
+    int boxCount = map.boxCount;
+    for(int i = 0; i < wallCount; i++) {
+        if(x == walls->x && y == walls->y) {
+            return 1;
+        }
+        ++walls;
+    }
+
+    for(int i = 0; i < boxCount; i++) {
+        if(x == boxes->x && y == boxes->y) {
+            return 1;
+        }
+        ++boxes;
+    }
+
+    return 0;
+}
+
 enum KeyEvent CaptureKeyEvent(int userPressedKey)
 {
     switch (userPressedKey)
@@ -268,7 +366,12 @@ void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
             return;
         if(! Rambler_isThereSpace4Move(*r,*m,UP))
             return;
-
+        for(int i = 0; i < boxCount; i++) {
+            if(r->y-1 == box->y && r->x == box->x) {
+                Box_move(box,UP,*m);
+            }
+            ++box;
+        }
         r->y -= 1;
         break;
     
@@ -277,6 +380,12 @@ void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
             return;
         if(! Rambler_isThereSpace4Move(*r,*m,DOWN))
             return;
+        for(int i = 0; i < boxCount; i++) {
+            if(r->y+1 == box->y && r->x == box->x) {
+                Box_move(box,DOWN,*m);
+            }
+            ++box;
+        }
 
         r->y = r->y+1;
         break;
@@ -286,6 +395,12 @@ void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
             return;
         if(! Rambler_isThereSpace4Move(*r,*m,LEFT))
             return;
+        for(int i = 0; i < boxCount; i++) {
+            if(r->x-1 == box->x && r->y == box->y) {
+                Box_move(box,LEFT,*m);
+            }
+            ++box;
+        }
 
         r->x = r->x - 1;
         break;
@@ -295,6 +410,13 @@ void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
             return;
         if(! Rambler_isThereSpace4Move(*r,*m,RIGHT))
             return;
+
+        for(int i = 0; i < boxCount; i++) {
+            if(r->x+1 == box->x && r->y == box->y) {
+                Box_move(box,RIGHT,*m);
+            }
+            ++box;
+        }
 
         r->x = r->x + 1;
         break;
