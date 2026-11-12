@@ -11,9 +11,20 @@ enum KeyEvent {
     RAMBLER_MOVE_RIGHT,
 };
 
+enum Direction {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+};
+
 typedef struct {
     int x,y;
 } Box;
+
+typedef struct {
+    int x,y;
+} Wall;
 
 typedef struct {
     // field size
@@ -21,7 +32,10 @@ typedef struct {
     int height;
 
     Box *boxes;
+    Wall * walls;
+
     int boxCount;
+    int wallCount;
 } GameMap ;
 
 typedef struct {
@@ -34,7 +48,21 @@ typedef struct {
 
 void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype);
 
+/**
+ * \brief check a direction for a rambler, to see if it's possible to move
+ * 
+ * \details let's see the situations below
+ *          situation0.  O      yes
+ *          situation1.  O #    no, blocked by wall
+ *          situation2.  O X    yes, and push box
+ *          situation2.  O X #  no, can't push box thru wall
+ *          situation3.  O X X  no, can't push more than one box
+ */
+int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir);
+
 void GameMap_Print(GameMap map, Rambler player);
+
+void Box_move(Box *b, enum Direction dir, GameMap map);
 
 int isPosEqual(int lhs[2],int rhs[2]);
 
@@ -46,7 +74,10 @@ enum KeyEvent CaptureKeyEvent(int userPressedKey);
 int main(void) {
     // init gamemap: box
     Box boxes[3] = {{2,2},{3,3},{2,3}};
-    GameMap map = {5,5,boxes,3};
+    Wall walls[2] = {{2,1},{3,1}};
+
+    GameMap map = {5,5,boxes,walls,3,2};
+
 
 
     Rambler ramb = {1,1, map};
@@ -70,13 +101,19 @@ int main(void) {
     return 0;
 }
 
+int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
+{
+    
+    return 1;   // always space
+}
 
-void GameMap_Print(GameMap map, Rambler player) {
-//    0 1  
-//  # # # #
-//0 # o   # rambler in (0, 0)
-//1 #     #
-//  # # # # this is a 2x2 game map
+void GameMap_Print(GameMap map, Rambler player)
+{
+    //    0 1
+    //  # # # #
+    // 0 # o   # rambler in (0, 0)
+    // 1 #     #
+    //  # # # # this is a 2x2 game map
     int width = map.width;
     int height = map.height;
 
@@ -112,12 +149,55 @@ void GameMap_Print(GameMap map, Rambler player) {
                 else if(isPosEqualBox(scanningPos, map.boxes, boxCount)) {
                     printf("X ");       // represents Box
                 }
+                else if(isPosEqualBox(scanningPos, map.walls, map.wallCount)) {
+                    printf("# ");       // represents Inner wall
+                }
                 else {
                     printf("  ");       // Game Field
                 }
             }
         }
     }
+}
+
+void Box_move(Box *b,enum Direction dir, GameMap map)
+{
+    int yMax = map.height;
+    int xMax = map.width;
+    // open issue: how to assure that rambler/box  and another box's collision?
+
+
+    switch (dir)
+    {
+    case UP:
+        if(b->y == 1)
+            return;
+
+        b->y -= 1;
+        break;
+    case DOWN:
+        if(b->y == yMax)
+            return;
+
+        b->y += 1;
+        break;
+    case LEFT:
+        if(b->x == 1)
+            return;
+
+        b->x -= 1;
+        break;
+    case RIGHT:
+        if(b->x == xMax)
+            return;
+
+        b->x += 1;
+        break;
+    
+    default:
+        break;
+    }
+
 }
 
 int isPosEqual(int lhs[2], int rhs[2])
@@ -176,6 +256,8 @@ enum KeyEvent CaptureKeyEvent(int userPressedKey)
 void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
     int width = r->map.width;
     int height = r->map.height;
+    Box *box = m->boxes;
+    int boxCount = m->boxCount;
     
     
     switch (movetype)
@@ -184,24 +266,36 @@ void Rambler_move(Rambler* r,GameMap* m, enum KeyEvent movetype) {
     case RAMBLER_MOVE_UP:
         if(r->y == 1)
             return;
+        if(! Rambler_isThereSpace4Move(*r,*m,UP))
+            return;
+
         r->y -= 1;
         break;
     
     case RAMBLER_MOVE_DOWN:
         if(r->y == height)
             return;
+        if(! Rambler_isThereSpace4Move(*r,*m,DOWN))
+            return;
+
         r->y = r->y+1;
         break;
-    
+
     case RAMBLER_MOVE_LEFT:
         if(r->x == 1)
             return;
+        if(! Rambler_isThereSpace4Move(*r,*m,LEFT))
+            return;
+
         r->x = r->x - 1;
         break;
     
     case RAMBLER_MOVE_RIGHT:
         if(r->x == width)
             return;
+        if(! Rambler_isThereSpace4Move(*r,*m,RIGHT))
+            return;
+
         r->x = r->x + 1;
         break;
 
