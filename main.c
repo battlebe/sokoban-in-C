@@ -27,15 +27,23 @@ typedef struct {
 } Wall;
 
 typedef struct {
+    int x,y;
+} BoxDest;
+
+typedef struct {
     // field size
     int width;
     int height;
 
+
+
     Box *boxes;
     Wall * walls;
+    BoxDest *boxDest;
 
     int boxCount;
     int wallCount;
+    int boxDestCount;
 } GameMap ;
 
 typedef struct {
@@ -70,6 +78,8 @@ int isPosEqualBox(int lhs[2],Box *boxes, int boxcount);
 
 int isWall(int x, int y, GameMap map);
 
+int isWin(GameMap map);
+
 enum KeyEvent CaptureKeyEvent(int userPressedKey);
 
 
@@ -77,8 +87,10 @@ int main(void) {
     // init gamemap: box
     Box boxes[] = {{2,2},{3,3},{2,3},{4,3}};
     Wall walls[3] = {{2,1},{3,1},{4,4}};
+    BoxDest boxDests[] = {{5,1},{5,5},{5,4},{1,5}};
 
-    GameMap map = {5,5,boxes,walls,4,3};
+
+    GameMap map = {5,5,boxes,walls,boxDests,4,3};
 
 
     Rambler ramb = {1,1, map};
@@ -97,6 +109,10 @@ int main(void) {
             Rambler_move(&ramb,&map,evnet);
             GameMap_Print(map, ramb);
             printf("rambler Moved!,  current pos(%d,%d)\n",ramb.x,ramb.y);
+            if(isWin(map)) {
+                printf("you win");
+                return 0;
+            }
         }
     }
     return 0;
@@ -223,6 +239,9 @@ void GameMap_Print(GameMap map, Rambler player)
                 else if(isPosEqualBox(scanningPos, map.walls, map.wallCount)) {
                     printf("# ");       // represents Inner wall
                 }
+                else if(isPosEqualBox(scanningPos, map.boxDest, map.boxCount)) {
+                    printf("\[\]");
+                }
                 else {
                     printf("  ");       // Game Field
                 }
@@ -320,6 +339,17 @@ int isWall(int x, int y, GameMap map)
     }
 
     return 0;
+}
+
+int isWin(GameMap map)
+{
+    BoxDest *dests = map.boxDest;
+    for(int i = 0; i < map.boxCount; i++) {
+       if(!isWall(dests->x,dests->y,map))
+            return 0;
+        ++dests;
+    }
+    return 1;
 }
 
 enum KeyEvent CaptureKeyEvent(int userPressedKey)
