@@ -5,7 +5,8 @@
 enum KeyEvent {
     GAME_EXIT,      // q
     GAME_RESTART,   // r
-    RAMBLER_MOVE_UP,
+    GAME_UNDO,      // z
+    RAMBLER_MOVE_UP, // w, a, s, d
     RAMBLER_MOVE_DOWN,
     RAMBLER_MOVE_LEFT,
     RAMBLER_MOVE_RIGHT,
@@ -76,9 +77,11 @@ int isPosEqual(int lhs[2],int rhs[2]);
 
 int isPosEqualBox(int lhs[2],Box *boxes, int boxcount);
 
-int isWall(int x, int y, GameMap map);
+int isEntity(int x, int y, GameMap map);
 
-int isWin(GameMap map);
+int Game_isWin(GameMap map);
+
+void Game_Reset(GameMap *map, Box *boxes, Rambler *r);
 
 enum KeyEvent CaptureKeyEvent(int userPressedKey);
 
@@ -89,8 +92,11 @@ int main(void) {
     Wall walls[3] = {{2,1},{3,1},{4,4}};
     BoxDest boxDests[] = {{5,1},{5,5},{5,4},{1,5}};
 
+    Box initalBoxes[] = {{2,2},{3,3},{2,3},{4,3}};
 
     GameMap map = {5,5,boxes,walls,boxDests,4,3};
+    
+    
 
 
     Rambler ramb = {1,1, map};
@@ -106,10 +112,14 @@ int main(void) {
             if(evnet == GAME_EXIT)
                 return 0;   //exit game
 
+            if(evnet == GAME_RESTART) {
+                Game_Reset(&map, initalBoxes, &ramb);
+            }
+
             Rambler_move(&ramb,&map,evnet);
             GameMap_Print(map, ramb);
-            printf("rambler Moved!,  current pos(%d,%d)\n",ramb.x,ramb.y);
-            if(isWin(map)) {
+            //printf("rambler Moved!,  current pos(%d,%d)\n",ramb.x,ramb.y);
+            if(Game_isWin(map)) {
                 printf("you win");
                 return 0;
             }
@@ -137,7 +147,7 @@ int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
             ++walls;
         }   
         for(int i = 0; i < boxCount; i++) {
-            if( ramblerY - boxes->y == 1 && ramblerX == boxes->x && isWall(boxes->x,boxes->y-1,m)) {
+            if( ramblerY - boxes->y == 1 && ramblerX == boxes->x && isEntity(boxes->x,boxes->y-1,m)) {
                 return 0;
             }
             ++boxes;
@@ -152,7 +162,7 @@ int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
             ++walls;
         }   
         for(int i = 0; i < boxCount; i++) {
-            if( ramblerY - boxes->y == -1 && ramblerX == boxes->x && isWall(boxes->x,boxes->y+1,m)) {
+            if( ramblerY - boxes->y == -1 && ramblerX == boxes->x && isEntity(boxes->x,boxes->y+1,m)) {
                 return 0;
             }
             ++boxes;
@@ -166,7 +176,7 @@ int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
             ++walls;
         }   
         for(int i = 0; i < boxCount; i++) {
-            if( ramblerX - boxes->x == 1 && ramblerY == boxes->y && isWall(boxes->x-1,boxes->y,m)) {
+            if( ramblerX - boxes->x == 1 && ramblerY == boxes->y && isEntity(boxes->x-1,boxes->y,m)) {
                 return 0;
             }
             ++boxes;
@@ -180,7 +190,7 @@ int Rambler_isThereSpace4Move(Rambler r, GameMap m, enum Direction dir)
             ++walls;
         }   
         for(int i = 0; i < boxCount; i++) {
-            if( ramblerX - boxes->x == -1 && ramblerY == boxes->y && isWall(boxes->x+1,boxes->y,m)) {
+            if( ramblerX - boxes->x == -1 && ramblerY == boxes->y && isEntity(boxes->x+1,boxes->y,m)) {
                 return 0;
             }
             ++boxes;
@@ -209,6 +219,8 @@ void GameMap_Print(GameMap map, Rambler player)
 
 
     system("cls");
+
+    printf("--bee's sokoban--\n");
 
     for(int i = 0; i <= height + 1; i++) {
         if (i == 0 || i == height+1) {      // lower and upper wall
@@ -314,7 +326,7 @@ int isPosEqualBox(int lhs[2],Box *boxes, int boxcount)
     return 0;
 }
 
-int isWall(int x, int y, GameMap map)
+int isEntity(int x, int y, GameMap map)
 {
     if (x == 0 || y ==0 || x == map.width+1 || y == map.height+1)
     {
@@ -341,15 +353,30 @@ int isWall(int x, int y, GameMap map)
     return 0;
 }
 
-int isWin(GameMap map)
+int Game_isWin(GameMap map)
 {
     BoxDest *dests = map.boxDest;
     for(int i = 0; i < map.boxCount; i++) {
-       if(!isWall(dests->x,dests->y,map))
+       if(!isEntity(dests->x,dests->y,map))
             return 0;
         ++dests;
     }
     return 1;
+}
+
+void Game_Reset(GameMap *map, Box *boxes, Rambler *r)
+{
+    //reset boxes
+    Box *currentMapBoxArr = map->boxes;
+    Box *initalBoxArr = boxes;
+    for(int i = 0; i < map->boxCount; i++) {
+        currentMapBoxArr->x = initalBoxArr->x;
+        currentMapBoxArr->y = initalBoxArr->y;
+        ++currentMapBoxArr;
+        ++initalBoxArr;
+    }
+    r->x = 1;
+    r->y = 1;
 }
 
 enum KeyEvent CaptureKeyEvent(int userPressedKey)
@@ -373,6 +400,9 @@ enum KeyEvent CaptureKeyEvent(int userPressedKey)
         break;
     case 114:   // r
         return GAME_RESTART;
+        break;
+    case 122:   // z
+        return GAME_UNDO;
         break;
     
     default:
